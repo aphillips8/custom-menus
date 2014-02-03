@@ -92,7 +92,7 @@ function custom_menus_admin_menu() {
 		}
 	} else {
 		$first_id = 1;
-		add_menu_page('Menus', 'Menus', 'upload_files', 'custom-menu-add', 'custom_menu_add', plugins_url('/images/icon.png', __FILE__));
+		add_menu_page('Menus', 'Menus', 'upload_files', 'custom-menu-add', 'custom_menu_add', plugins_url('/images/icon.png', __FILE__), "51.5");
 	}
 	
 	// Page title, Menu title, Capability, Menu Slug, Function, Icon URL
