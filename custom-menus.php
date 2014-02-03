@@ -84,7 +84,7 @@ function custom_menus_admin_menu() {
 				$first_id = stripslashes($parent_menu_name->id);
 				// Page title, Menu title, Capability, Menu Slug, Function, Icon URL
 				// Don't add top level page to $pages array
-				add_menu_page('Menus', 'Menus', 'upload_files', 'custom-menu-' . stripslashes($parent_menu_name->id), 'custom_menu_items', plugins_url('/images/icon.png', __FILE__));
+				add_menu_page('Menus', 'Menus', 'upload_files', 'custom-menu-' . stripslashes($parent_menu_name->id), 'custom_menu_items', plugins_url('/images/icon.png', __FILE__), "51.5");
 				$first_run = false;
 			}
 			// Page title, Menu title, Capability, Menu Slug, Function, Icon URL
