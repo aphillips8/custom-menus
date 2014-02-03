@@ -17,6 +17,18 @@ function add_new_item_validate() {
 	return true;
 }
 
+function add_new_menu_validate() {
+	// Declare variables
+	var menu_title = document.getElementById('category_title').value;
+	
+	if(menu_title == "") {
+		alert("Please enter a title.");
+		return false;
+	}
+	
+	return true;
+}
+
 function add_new_category_validate() {
 	// Declare variables
 	var category_title = document.getElementById('category_title').value;

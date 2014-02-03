@@ -92,10 +92,12 @@ function custom_menus_admin_menu() {
 		}
 	} else {
 		$first_id = 1;
+		add_menu_page('Menus', 'Menus', 'upload_files', 'custom-menu-add', 'custom_menu_add', plugins_url('/images/icon.png', __FILE__));
 	}
 	
 	// Page title, Menu title, Capability, Menu Slug, Function, Icon URL
 	$pages[] = add_submenu_page('custom-menu-' . $first_id, 'Menu Categories', 'Menu Categories', 'upload_files', 'custom-menu-categories', 'custom_menu_categories');
+	$pages[] = add_submenu_page('custom-menu-' . $first_id, 'Add Menu', 'Add Menu', 'upload_files', 'custom-menu-add', 'custom_menu_add');
 	
 	// Enqueue plugin styles and scripts to each admin page
 	foreach($pages as $page) {
@@ -210,46 +212,72 @@ function delete_menu_item($id) {
 	}
 }
 
-function add_menu_category() {
+function add_menu_category($top_level = false) {
 	global $wpdb;
 	
 	$category_title = htmlentities(($_POST["category_title"]), ENT_QUOTES, "UTF-8", false);
-	$category_subheading = htmlentities(($_POST["category_subheading"]), ENT_QUOTES, "UTF-8", false);
-	$category_menu = htmlentities(($_POST["category_menu"]), ENT_QUOTES, "UTF-8", false);
-	
-	$sort_order = $wpdb->get_var("SELECT sort_order FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent = " . mysql_escape_string($category_menu) . " ORDER BY sort_order DESC LIMIT 1");
-	
-	if(!empty($sort_order)) {
-		$sort_order = $sort_order + 1;
-	} else {
-		$sort_order = 1;
-	}
-	
-	if($category_title != "" && $category_menu != "") {
-		$wpdb->get_results("INSERT INTO " . CUSTOM_MENU_CATEGORIES_TABLE . " SET menu_parent='" . mysql_escape_string($category_menu) . "',  sort_order ='" . mysql_escape_string($sort_order) . "', title='" . mysql_escape_string($category_title) . "', subheading='" . mysql_escape_string($category_subheading) . "'");
-		
-		show_notification_message("category-added");
-	}
-}
 
-function update_menu_categories() {
-	global $wpdb;
-	$category_ids = $wpdb->get_col("SELECT id FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent !=0 ORDER BY id ASC");
-	foreach ($category_ids as $category_id) {
-		$category_title = htmlentities(($_POST['title_' . $category_id]), ENT_QUOTES, "UTF-8", false);
-		$category_subheading = htmlentities(($_POST['subheading_' . $category_id]), ENT_QUOTES, "UTF-8", false);
+	if($top_level) {
 		if($category_title != "") {
-			$wpdb->get_results("UPDATE " . CUSTOM_MENU_CATEGORIES_TABLE . " SET title = '". mysql_escape_string($category_title) . "', subheading = '". mysql_escape_string($category_subheading) . "' WHERE id = " . $category_id);
+			$wpdb->get_results("INSERT INTO " . CUSTOM_MENU_CATEGORIES_TABLE . " SET menu_parent='0', title='" . mysql_escape_string($category_title) . "'");
+			
+			show_notification_message("menu-added");
+		}
+	} else {
+		$category_subheading = htmlentities(($_POST["category_subheading"]), ENT_QUOTES, "UTF-8", false);
+		$category_menu = htmlentities(($_POST["category_menu"]), ENT_QUOTES, "UTF-8", false);
+		
+		$sort_order = $wpdb->get_var("SELECT sort_order FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent = " . mysql_escape_string($category_menu) . " ORDER BY sort_order DESC LIMIT 1");
+		
+		if(!empty($sort_order)) {
+			$sort_order = $sort_order + 1;
+		} else {
+			$sort_order = 1;
+		}
+		
+		if($category_title != "" && $category_menu != "") {
+			$wpdb->get_results("INSERT INTO " . CUSTOM_MENU_CATEGORIES_TABLE . " SET menu_parent='" . mysql_escape_string($category_menu) . "', sort_order ='" . mysql_escape_string($sort_order) . "', title='" . mysql_escape_string($category_title) . "', subheading='" . mysql_escape_string($category_subheading) . "'");
+			
+			show_notification_message("category-added");
 		}
 	}
-	show_notification_message("category-updated");
 }
 
-function delete_menu_category($id) {
+function update_menu_categories($top_level = false) {
 	global $wpdb;
+
+	if($top_level) {
+		$menu_ids = $wpdb->get_col("SELECT id FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent = 0 ORDER BY id ASC");
+		foreach ($menu_ids as $menu_id) {
+			$menu_title = htmlentities(($_POST['title_' . $menu_id]), ENT_QUOTES, "UTF-8", false);
+			if($menu_title != "") {
+				$wpdb->get_results("UPDATE " . CUSTOM_MENU_CATEGORIES_TABLE . " SET title = '". mysql_escape_string($menu_title) . "' WHERE id = " . $menu_id);
+			}
+		}
+		show_notification_message("menu-updated");
+	} else {
+		$category_ids = $wpdb->get_col("SELECT id FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent != 0 ORDER BY id ASC");
+		foreach ($category_ids as $category_id) {
+			$category_title = htmlentities(($_POST['title_' . $category_id]), ENT_QUOTES, "UTF-8", false);
+			$category_subheading = htmlentities(($_POST['subheading_' . $category_id]), ENT_QUOTES, "UTF-8", false);
+			if($category_title != "") {
+				$wpdb->get_results("UPDATE " . CUSTOM_MENU_CATEGORIES_TABLE . " SET title = '". mysql_escape_string($category_title) . "', subheading = '". mysql_escape_string($category_subheading) . "' WHERE id = " . $category_id);
+			}
+		}
+		show_notification_message("category-updated");
+	}
+}
+
+function delete_menu_category($id, $top_level = false) {
+	global $wpdb;
+
 	if($id != NULL) {
 		$wpdb->get_results("DELETE FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE id = " . mysql_escape_string($id));
-		show_notification_message("category-deleted");
+		if($top_level) {
+			show_notification_message("menu-deleted");
+		} else {
+			show_notification_message("category-deleted");
+		}
 	}
 }
 
@@ -267,6 +295,12 @@ function show_notification_message($notification_to_show) {
 		echo "Menu categories updated successfully.";
 	} elseif($notification_to_show == "category-deleted") {
 		echo "Menu category deleted successfully.";
+	} elseif($notification_to_show == "menu-added") {
+		echo "Menu added successfully. <a href=\"?page=custom-menu-categories\">Add a category</a> to get started.";
+	} elseif($notification_to_show == "menu-updated") {
+		echo "Menu updated successfully.";
+	} elseif($notification_to_show == "menu-deleted") {
+		echo "Menu deleted successfully.";
 	}
 	echo '</p></div>';
 }
@@ -330,23 +364,31 @@ function custom_menu_items() {
 						<input type="text" name="item_additional_info" id="item_additional_info" class="custom-long-text" />
 					</td>
 				</tr>
+				<?php
+				// Loop through all categories, get title and ID while categories exist
+				$category_menu_names = $wpdb->get_results("SELECT * FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent=" . $custom_menu_id . " ORDER BY sort_order ASC");
+
+				// Only show dropdown if there's more than one item
+				if(count($category_menu_names) > 1) {
+				?>
 				<tr>
 					<th scope="row">Category</th>
 					<td>
 						<select name="item_category" id="item_category">
 							<option value=""></option>
-							<?php
-							// Loop through all categories, get title and ID while categories exist
-							$category_menu_names = $wpdb->get_results("SELECT * FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent=" . $custom_menu_id . " ORDER BY sort_order ASC");
-							foreach ($category_menu_names as $category_menu_name) {
-							?>
+							<?php foreach ($category_menu_names as $category_menu_name) { ?>
 								<option value="<?php echo stripslashes($category_menu_name->id); ?>"><?php echo stripslashes($category_menu_name->title); ?></option>
-							<?php
-							}
-							?>
+							<?php } ?>
 						</select>
 					</td>
 				</tr>
+				<?php } else { ?>
+				<tr class="hidden">
+					<td colspan="2">
+						<input type="hidden" name="item_category" value="<?php echo stripslashes($category_menu_names[0]->id); ?>" />
+					</td>
+				</tr>
+				<?php } ?>
 			</table>
 			<p class="submit">
 			<input type="submit" class="button-primary" value="Add Menu Item" />
@@ -418,6 +460,82 @@ function custom_menu_items() {
 <?php
 }
 
+function custom_menu_add() {
+	global $wpdb;
+	if(isset($_REQUEST['action'])) {
+		if($_REQUEST['action'] == 'add-category') {
+			add_menu_category(true);
+		} elseif($_REQUEST['action'] == 'update-category') {
+			update_menu_categories(true);
+		} elseif($_REQUEST['action'] == 'delete-category') {
+			if(isset($_GET['id'])) {
+				$id = $_GET['id'];
+			} else {
+				$id = NULL;
+			}
+			delete_menu_category($id, true);
+		}
+	}
+	// Output wrapper
+	?>
+	<div class="wrap">
+	<h2>Add a New Menu</h2>
+		<form method="post" action="?page=<?php echo $_GET["page"]; ?>" onsubmit="return add_new_menu_validate();">
+			<input type="hidden" name="action" value="add-category" />
+			<table class="form-table">
+				<tr valign="top">
+					<th scope="row">
+						<label for="category_title">Title</label>
+					</th>
+					<td>
+						<input type="text" name="category_title" id="category_title" class="custom-long-text" />
+					</td>
+				</tr>
+			</table>
+			<p class="submit">
+			<input type="submit" class="button-primary" value="Add Menu" />
+			</p>
+		</form>
+	<?php
+		$menus = $wpdb->get_results("SELECT * FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent=0 ORDER BY sort_order ASC");
+		if(!empty($menus)) {
+		?>
+		<form method="post" action="?page=<?php echo $_GET["page"]; ?>">
+		<input type="hidden" name="action" value="update-category" />
+		<h2>Menus</h2>
+		<table class="widefat fixed" cellspacing="0">
+			<thead>
+				<tr class="thead">
+					<th scope="col">Title</th>
+					<th scope="col" class="custom-width-buttons"></th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr class="thead">
+					<th scope="col">Title</th>
+					<th scope="col" class="custom-width-buttons"></th>
+				</tr>
+			</tfoot>
+		<tbody>
+		<?php
+			foreach ($menus as $menu) {
+			?>
+		<tr>
+			<td><input type="hidden" name="menu_category_id" value="<?php echo stripslashes($menu->id);?>" class="menu-category-id" /><input type="text" name="title_<?php echo stripslashes($menu->id);?>" value="<?php echo stripslashes($menu->title); ?>" class="custom-full-width" /></td>
+			<td class="custom-width-buttons"><input type="submit" class="button-primary" value="Save Changes" /> <a href="?page=<?php echo $_GET["page"]; ?>&amp;action=delete-category&amp;id=<?php echo stripslashes($menu->id);?>" class="button" onclick="return confirm('Are you sure you want to delete this menu? \nMenu items and categories will also be deleted.')">Delete</a></td>
+		</tr>
+			<?php } // End parent menu loop
+		?>
+		</tbody>
+		</table><br />
+	</form>
+	<?php
+	} // End if parent menu is not empty
+	?>
+	</div>
+	<?php
+}
+
 function custom_menu_categories() {
 	global $wpdb;
 	if(isset($_REQUEST['action'])) {
@@ -457,23 +575,31 @@ function custom_menu_categories() {
 						<input type="text" name="category_subheading" id="category_subheading" class="custom-long-text" />
 					</td>
 				</tr>
+				<?php
+				// Loop through all categories, get title and ID while categories exist
+				$parent_menu_names = $wpdb->get_results("SELECT * FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent=0 ORDER BY sort_order ASC");
+
+				// Only show dropdown if there's more than one item
+				if(count($parent_menu_names) > 1) {
+				?>
 				<tr>
 					<th scope="row">Menu</th>
 					<td>
 						<select name="category_menu" id="category_menu">
 							<option value=""></option>
-							<?php
-							// Loop through all categories, get title and ID while categories exist
-							$parent_menu_names = $wpdb->get_results("SELECT * FROM " . CUSTOM_MENU_CATEGORIES_TABLE . " WHERE menu_parent=0 ORDER BY sort_order ASC");
-							foreach ($parent_menu_names as $parent_menu_name) {
-							?>
+							<?php foreach ($parent_menu_names as $parent_menu_name) { ?>
 								<option value="<?php echo stripslashes($parent_menu_name->id); ?>"><?php echo stripslashes($parent_menu_name->title); ?></option>
-							<?php
-							}
-							?>
+							<?php } ?>
 						</select>
 					</td>
 				</tr>
+				<?php } else { ?>
+				<tr class="hidden">
+					<td colspan="2">
+						<input type="hidden" name="category_menu" value="<?php echo stripslashes($parent_menu_names[0]->id); ?>" />
+					</td>
+				</tr>
+				<?php } ?>
 			</table>
 			<p class="submit">
 			<input type="submit" class="button-primary" value="Add Category" />
