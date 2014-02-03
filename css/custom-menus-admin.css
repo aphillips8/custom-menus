@@ -1,0 +1,25 @@
+.custom-long-text {
+	width: 80%;
+}
+
+.custom-full-width {
+	width: 100%;
+}
+
+.custom-width-order {
+	width: 55px;
+}
+
+.custom-width-price {
+	width: 100px;
+}
+
+.custom-width-buttons {
+	width: 182px;
+	text-align: center;
+}
+
+.drag-me {
+	background: url(../images/drag.png) no-repeat center center;
+	cursor: move;
+}
